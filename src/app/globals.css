@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  /* Premium Light Theme Palette */
+  --background: #f8fafc; /* Slate-50 */
+  --foreground: #0f172a; /* Slate-900 */
+  --card-bg: #ffffff;
+  --primary: #4f46e5; /* Indigo-600 */
+  --primary-hover: #4338ca; /* Indigo-700 */
+  --accent: #10b981; /* Emerald-500 */
+  --muted: #64748b; /* Slate-500 */
+  --border: #e2e8f0; /* Slate-200 */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card-bg);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
