@@ -2,187 +2,221 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import TechnicalExplainer from '@/app/components/TechnicalExplainer';
 
-const initialState = {
-    message: '',
-    errors: {} as Record<string, string[]>,
-    success: false,
-};
-
-// Mock Server Action
-async function mockSubmitContactForm(prevState: any, formData: FormData) {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    const email = formData.get('email') as string;
-    const message = formData.get('message') as string;
-
-    // Simulate validation
-    const errors: Record<string, string[]> = {};
-    if (!email || !email.includes('@')) {
-        errors.email = ['Please enter a valid email address.'];
-    }
-    if (!message || message.length < 10) {
-        errors.message = ['Message must be at least 10 characters.'];
-    }
-
-    if (Object.keys(errors).length > 0) {
-        return {
-            success: false,
-            errors,
-            message: 'Validation failed. Please check your inputs.',
-        };
-    }
-
-    return {
-        success: true,
-        errors: {},
-        message: 'Message sent successfully! (Simulated)',
-    };
-}
-
-function SubmitButton({ isPending }: { isPending: boolean }) {
+// --- VISUALIZER COMPONENT ---
+function RPCVisualizer({ step, payload, response }: { step: 'idle' | 'sending' | 'processing' | 'returning' | 'done', payload: any, response: any }) {
     return (
-        <button
-            type="submit"
-            disabled={isPending}
-            className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all transform active:scale-[0.98] ${isPending
-                ? 'bg-slate-400 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700 shadow-md hover:shadow-lg'
-                }`}
-        >
-            {isPending ? (
-                <span className="flex items-center justify-center gap-2">
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Sending...
-                </span>
-            ) : (
-                'Send Message'
-            )}
-        </button>
+        <div className="relative py-12 px-4 bg-slate-50 border-y border-slate-200 overflow-hidden">
+            {/* Background Network Grid */}
+            <div className="absolute inset-0 opacity-5" style={{ backgroundImage: 'radial-gradient(#6366f1 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+
+            <div className="max-w-4xl mx-auto flex justify-between items-center relative z-10">
+
+                {/* CLIENT NODE */}
+                <div className={`transition-all duration-500 transform ${step === 'idle' || step === 'done' ? 'scale-100 opacity-100' : 'scale-95 opacity-80'}`}>
+                    <div className="bg-white p-4 rounded-xl border-2 border-slate-300 shadow-sm w-48 text-center">
+                        <div className="text-4xl mb-2">💻</div>
+                        <div className="font-bold text-slate-700">Client (Browser)</div>
+                        <div className="text-xs text-slate-500 mt-1">user initiates action</div>
+                    </div>
+                </div>
+
+                {/* ANIMATED PACKET */}
+                <div className="flex-1 relative h-32 flex items-center justify-center">
+                    {/* Connection Line */}
+                    <div className="absolute top-1/2 left-0 right-0 h-1 bg-slate-200 -z-10"></div>
+
+                    {/* Request Packet -> */}
+                    <div className={`absolute transition-all duration-1000 ease-in-out transform
+                        ${step === 'idle' ? 'left-0 opacity-0 scale-50' : ''}
+                        ${step === 'sending' ? 'left-[40%] opacity-100 scale-100' : ''}
+                        ${step === 'processing' ? 'left-[80%] opacity-0 scale-50' : ''}
+                        ${step === 'returning' ? 'left-[80%] opacity-0' : ''}
+                        ${step === 'done' ? 'left-0 opacity-0' : ''}
+                    `}>
+                        <div className="bg-indigo-600 text-white text-xs font-mono py-1 px-3 rounded-full shadow-lg whitespace-nowrap">
+                            FN_CALL(formData) ➡️
+                        </div>
+                    </div>
+
+                    {/* Response Packet <- */}
+                    <div className={`absolute transition-all duration-1000 ease-in-out transform
+                        ${step === 'idle' ? 'right-[80%] opacity-0' : ''}
+                        ${step === 'sending' ? 'right-[80%] opacity-0' : ''}
+                        ${step === 'processing' ? 'right-[20%] opacity-0' : ''}
+                        ${step === 'returning' ? 'right-[40%] opacity-100 scale-100' : ''}
+                        ${step === 'done' ? 'right-[80%] opacity-0 scale-50' : ''}
+                    `}>
+                        <div className="bg-emerald-600 text-white text-xs font-mono py-1 px-3 rounded-full shadow-lg whitespace-nowrap">
+                            ⬅️ RETURN {JSON.stringify(response?.success)}
+                        </div>
+                    </div>
+                </div>
+
+                {/* SERVER NODE */}
+                <div className={`transition-all duration-500 transform ${step === 'processing' ? 'scale-110 ring-4 ring-indigo-200 border-indigo-500' : 'scale-100 border-slate-300'}`}>
+                    <div className="bg-slate-900 p-4 rounded-xl border-2 shadow-xl w-48 text-center relative overflow-hidden">
+                        {step === 'processing' && <div className="absolute inset-0 bg-indigo-500/20 animate-pulse"></div>}
+                        <div className="text-4xl mb-2">☁️</div>
+                        <div className="font-bold text-white">Server (Node.js)</div>
+                        <div className="text-xs text-slate-400 mt-1">executes function</div>
+
+                        {/* Server Log Simulation */}
+                        <div className={`absolute -bottom-12 left-0 right-0 bg-black/80 text-[10px] text-green-400 font-mono p-2 transition-all duration-300 ${step === 'processing' ? 'translate-y-0' : 'translate-y-full'}`}>
+                            &gt; verifying email...<br />&gt; database.save()...
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     );
 }
 
-export default function ServerActionsPage() {
-    const [state, setState] = useState(initialState);
-    const [isPending, setIsPending] = useState(false);
+// --- MAIN PAGE ---
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        setIsPending(true);
-        const formData = new FormData(event.currentTarget);
-        const newState = await mockSubmitContactForm(state, formData);
-        setState(newState);
-        setIsPending(false);
-        if (newState.success) {
-            (event.target as HTMLFormElement).reset();
-        }
+interface FormState {
+    message: string;
+    errors: Record<string, string[]>;
+    success: boolean;
+}
+
+const initialState: FormState = { message: '', errors: {}, success: false };
+
+export default function ServerActionsPage() {
+    // VISUALIZER STATE
+    const [step, setStep] = useState<'idle' | 'sending' | 'processing' | 'returning' | 'done'>('idle');
+
+    // FORM STATE
+    const [state, setState] = useState<FormState>(initialState);
+    const [email, setEmail] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        // 1. SENDING
+        setStep('sending');
+        await new Promise(r => setTimeout(r, 1000)); // Animate travel time
+
+        // 2. PROCESSING (Simulated Server)
+        setStep('processing');
+        await new Promise(r => setTimeout(r, 1500)); // Animate execution time
+
+        // 3. RETURNING
+        setStep('returning');
+        const isSuccess = email.includes('@');
+        const response: FormState = isSuccess
+            ? { success: true, message: 'Saved to Database!', errors: {} }
+            : { success: false, message: 'Invalid Email', errors: { email: ['Missing @ symbol'] } };
+
+        await new Promise(r => setTimeout(r, 1000)); // Animate travel time
+
+        // 4. DONE
+        setStep('done');
+        setState(response);
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-6 space-y-8">
-            <div className="flex items-center gap-4">
-                <Link
-                    href="/features/next"
-                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
-                >
-                    ← Back
-                </Link>
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Server Actions</h1>
-                    <p className="text-slate-600">Form handling with built-in loading states and validation.</p>
+        <div className="space-y-8">
+            <div className="max-w-4xl mx-auto px-6">
+                <div className="flex items-center gap-4 mb-8">
+                    <Link href="/features/next" className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600">← Back</Link>
+                    <div>
+                        <h1 className="text-3xl font-bold text-slate-900">Server Actions Visualizer</h1>
+                        <p className="text-slate-600">See how "Invisible APIs" work under the hood.</p>
+                    </div>
                 </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-12 items-start">
-                <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-lg">
-                    <form onSubmit={handleSubmit} className="space-y-6">
+            {/* VISUALIZER STAGE */}
+            <RPCVisualizer step={step} payload={{ email }} response={state} />
+
+            <div className="max-w-4xl mx-auto px-6 grid md:grid-cols-2 gap-12">
+
+                {/* THE CODE (Mental Model) */}
+                <div className="space-y-4">
+                    <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                        <span className="bg-indigo-100 text-indigo-700 w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span>
+                        The Mental Model (Code)
+                    </h3>
+                    <div className="bg-slate-900 rounded-xl p-4 overflow-hidden shadow-lg border border-slate-700 relative">
+                        <div className="absolute top-0 right-0 bg-indigo-600 text-white text-[10px] uppercase font-bold px-2 py-1 rounded-bl-lg">Running on Server</div>
+                        <pre className="text-sm font-mono text-indigo-300 overflow-x-auto">
+                            {`// actions.ts
+'use server'
+
+export async function saveEmail(formData) {
+  // 1. This runs SECURELY on Node.js
+  const email = formData.get('email');
+  
+  // 2. Direct DB access (No API needed)
+  await db.users.create({ email });
+  
+  // 3. Return data to client
+  return { success: true };
+}`}
+                        </pre>
+                    </div>
+                    <p className="text-sm text-slate-600 italic">
+                        Notice: You just write a function. Next.js handles the API endpoint, the fetch(), and the serialization for you.
+                    </p>
+                </div>
+
+                {/* THE INTERACTION (Try it) */}
+                <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-xl">
+                    <h3 className="font-bold text-slate-900 mb-6 flex items-center gap-2">
+                        <span className="bg-emerald-100 text-emerald-700 w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span>
+                        Try the Action
+                    </h3>
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-1">
-                                Email Address
-                            </label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Enter Email</label>
                             <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                placeholder="you@example.com"
-                                className={`w-full px-4 py-3 rounded-lg border ${state?.errors?.email ? 'border-red-300 focus:ring-red-200' : 'border-slate-300 focus:ring-indigo-100'
-                                    } focus:outline-none focus:ring-4 transition-all`}
+                                type="text"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="test@example.com"
+                                className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                             />
-                            {state?.errors?.email && (
-                                <p className="mt-1 text-sm text-red-600">{state.errors.email[0]}</p>
+                            {/* Safe access to errors */}
+                            {state.errors && state.errors.email && (
+                                <p className="text-red-500 text-xs mt-1">{state.errors.email[0]}</p>
                             )}
                         </div>
 
-                        <div>
-                            <label htmlFor="message" className="block text-sm font-medium text-slate-700 mb-1">
-                                Message
-                            </label>
-                            <textarea
-                                id="message"
-                                name="message"
-                                rows={4}
-                                placeholder="Tell us about your project..."
-                                className={`w-full px-4 py-3 rounded-lg border ${state?.errors?.message ? 'border-red-300 focus:ring-red-200' : 'border-slate-300 focus:ring-indigo-100'
-                                    } focus:outline-none focus:ring-4 transition-all resize-none`}
-                            />
-                            {state?.errors?.message && (
-                                <p className="mt-1 text-sm text-red-600">{state.errors.message[0]}</p>
-                            )}
-                        </div>
+                        <button
+                            type="submit"
+                            disabled={step !== 'idle' && step !== 'done'}
+                            className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors"
+                        >
+                            {step === 'idle' || step === 'done' ? 'Simulate Server Action' : 'Executing...'}
+                        </button>
 
-                        {state?.message && (
-                            <div className={`p-4 rounded-lg ${state.success ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                        {state.message && step === 'done' && (
+                            <div className={`p-3 rounded-lg text-sm text-center animate-in fade-in slide-in-from-bottom-2 ${state.success ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
                                 {state.message}
                             </div>
                         )}
-
-                        <SubmitButton isPending={isPending} />
                     </form>
                 </div>
 
-                <div className="space-y-8">
-                    <div className="bg-indigo-900 text-indigo-50 p-6 rounded-xl shadow-inner">
-                        <h3 className="font-bold text-lg mb-4 text-white">Why Server Actions?</h3>
-                        <ul className="space-y-4 text-sm">
-                            <li className="flex gap-3">
-                                <span className="bg-indigo-500/30 p-1 rounded h-fit">🚀</span>
-                                <div>
-                                    <strong className="block text-white">Progressive Enhancement</strong>
-                                    Forms work even before JavaScript loads (if configured correctly), but hydrate to provide rich interactivity.
-                                </div>
-                            </li>
-                            <li className="flex gap-3">
-                                <span className="bg-indigo-500/30 p-1 rounded h-fit">🔒</span>
-                                <div>
-                                    <strong className="block text-white">Type Safety</strong>
-                                    Seamlessly share types between client and server code without API glue layers.
-                                </div>
-                            </li>
-                            <li className="flex gap-3">
-                                <span className="bg-indigo-500/30 p-1 rounded h-fit">⚡</span>
-                                <div>
-                                    <strong className="block text-white">Reduced Bundle Size</strong>
-                                    Validation logic (like Zod schemas) stays on the server, keeping your client bundle small.
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
-                        <h4 className="font-semibold text-slate-800 mb-2 code-font">Static Export Simulation</h4>
-                        <p className="text-sm text-slate-600 mb-4">
-                            Since this site is hosted on GitHub Pages (Static Export), we use client-side logical to simulate the behavior of Server Actions, including validation delay and state management.
-                        </p>
-                        <code className="block bg-white p-3 rounded border border-slate-200 text-xs font-mono text-slate-700 overflow-x-auto">
-                            {'// Simulated Action\nconst [state, setState] = useState(initialState);'}
-                        </code>
-                    </div>
-                </div>
             </div>
+
+            <div className="max-w-4xl mx-auto px-6 mt-12 mb-12">
+                <TechnicalExplainer
+                    title="What actually happened?"
+                    analogy="It's like having a walkie-talkie directly to the server room. You speak (call function), and the person in the server room does the work and speaks back. You don't need to write a letter (API Request), address it (URL), and mail it."
+                    points={[
+                        "Zero API Routes: You didn't create /api/save-email. Next.js created a hidden one for you.",
+                        "Closure Support: You can pass data directly to the function.",
+                        "Type Safety: The arguments and return types are checked at build time.",
+                        "Not SSR: SSR is for *Downloading the Page* (GET). Server Actions are for *Submitting Data* (POST/RPC) after the page loads."
+                    ]}
+                />
+            </div>
+
         </div>
     );
 }

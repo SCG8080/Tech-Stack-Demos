@@ -25,6 +25,12 @@ export default function NextFeaturesPage() {
             desc: "Timeline of major Next.js milestones and architectural shifts.",
             href: "/features/next/history",
             color: "violet"
+        },
+        {
+            title: "Rendering Modes",
+            desc: "Interactive Playground: Compare SSR vs CSR vs SSG visually.",
+            href: "/features/next/rendering",
+            color: "pink"
         }
     ];
 
