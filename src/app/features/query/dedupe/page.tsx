@@ -4,26 +4,45 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import TechnicalExplainer from '@/app/components/TechnicalExplainer';
 
-// Simulate network request for Static Export
+// Use a real external API endpoint to show network requests
 const fetchSlowData = async () => {
-    // Artificial delay to allow user to see "Loading..." state and test dedupe
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Using JSONPlaceholder as a real endpoint
+    const res = await fetch('https://jsonplaceholder.typicode.com/todos/' + Math.floor(Math.random() * 200));
+    const data = await res.json();
 
     return {
-        id: Math.floor(Math.random() * 10000),
-        timestamp: new Date().toLocaleTimeString()
+        id: data.id,
+        timestamp: new Date().toLocaleTimeString(),
+        title: data.title
     };
 };
 
 function DataBox({ title, color }: { title: string, color: string }) {
+    const queryClient = useQueryClient();
     const { data, isLoading, isFetching } = useQuery({
         queryKey: ['dedupe-demo'],
         queryFn: fetchSlowData,
     });
 
+    const handleRefetch = () => {
+        queryClient.invalidateQueries({ queryKey: ['dedupe-demo'] });
+    };
+
     return (
         <div className={`p-6 rounded-xl border-2 ${isLoading ? 'border-dashed border-slate-300' : 'border-solid border-' + color + '-500 bg-' + color + '-50'}`}>
-            <h3 className={`font-bold text-${color}-700 mb-2`}>{title}</h3>
+            <div className="flex items-center justify-between mb-3">
+                <h3 className={`font-bold text-${color}-700`}>{title}</h3>
+                <button
+                    onClick={handleRefetch}
+                    disabled={isFetching}
+                    className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${isFetching
+                            ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                            : `bg-${color}-600 text-white hover:bg-${color}-700 active:scale-95`
+                        }`}
+                >
+                    {isFetching ? '⏳' : '🔄'} Refetch
+                </button>
+            </div>
             {isLoading ? (
                 <div className="flex items-center gap-2 text-slate-500 animate-pulse">
                     <div className="w-5 h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
@@ -31,7 +50,7 @@ function DataBox({ title, color }: { title: string, color: string }) {
                 </div>
             ) : (
                 <div className="space-y-1">
-                    <div className={`text-2xl font-mono font-bold text-${color}-900`}>{data?.id ?? 'N/A'}</div>
+                    <div className={`text-2xl font-mono font-bold text-${color}-900`}>#{data?.id ?? 'N/A'}</div>
                     <div className="text-xs text-slate-500">Fetched at: {data?.timestamp ?? 'N/A'}</div>
                     {isFetching && <div className="text-xs text-amber-600 font-semibold animate-pulse">Refetching in background...</div>}
                 </div>
@@ -68,7 +87,7 @@ export default function DedupePage() {
                                 onClick={() => queryClient.invalidateQueries({ queryKey: ['dedupe-demo'] })}
                                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm"
                             >
-                                Refetch Once
+                                Refetch Both
                             </button>
                             <button
                                 onClick={() => setShowSecond(!showSecond)}
@@ -87,8 +106,8 @@ export default function DedupePage() {
                         </div>
 
                         <div className="mt-8 p-4 bg-amber-50 rounded-lg border border-amber-100 text-sm text-amber-800">
-                            <strong>Observe:</strong> If you trigger a refetch while both are visible, they will both go into &quot;Loading/Fetching&quot; state simultaneously.
-                            They will resolve at the exact same time with the exact same Random ID - proving only <strong>ONE</strong> function call executed.
+                            <strong>Observe:</strong> Open your Network tab (F12 → Network). Click "Refetch Both" or use individual refetch buttons while both components are visible.
+                            You'll see only <strong>ONE</strong> request to jsonplaceholder.typicode.com, but both components update with the same data simultaneously!
                         </div>
                     </div>
                 </div>
@@ -119,12 +138,12 @@ export default function DedupePage() {
                             </div>
                             <div className="text-slate-300">vs</div>
                             <div className="text-center">
-                                <div className="text-2xl font-bold text-indigo-600">1</div>
+                                <div className="text-2xl font-bold text-indigo-600">~1</div>
                                 <div className="text-xs text-indigo-400 uppercase font-semibold">Request</div>
                             </div>
                         </div>
                         <p className="text-xs text-center text-slate-400 mt-2">
-                            (Simulated: Watch both components get the SAME Random ID at the SAME time!)
+                            (Open Network tab and filter by &quot;jsonplaceholder&quot; to verify!)
                         </p>
                     </div>
                 </div>
@@ -136,7 +155,8 @@ export default function DedupePage() {
                 points={[
                     "Shared Promises: When multiple parts of your app ask for the same data at the same time, we group them.",
                     "One Request: We only send ONE message to the server, saving battery and data.",
-                    "Instant Updates: When the answer comes back, everyone who asked gets it at the exact same millisecond."
+                    "Instant Updates: When the answer comes back, everyone who asked gets it at the exact same millisecond.",
+                    "Network Visible: Open your browser's Network tab to see the actual HTTP requests being deduplicated in real-time!"
                 ]}
                 codeSnippet={`// Even if called 100 times:
 queryClient.invalidateQueries(['dedupe']);
