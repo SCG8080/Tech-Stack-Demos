@@ -4,9 +4,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import TechnicalExplainer from '@/app/components/TechnicalExplainer';
 
+// Simulate network request for Static Export
 const fetchSlowData = async () => {
-    const res = await fetch('/api/demo/slow');
-    return res.json();
+    // Artificial delay to allow user to see "Loading..." state and test dedupe
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    return {
+        id: Math.floor(Math.random() * 10000),
+        timestamp: new Date().toLocaleTimeString()
+    };
 };
 
 function DataBox({ title, color }: { title: string, color: string }) {
@@ -25,8 +31,8 @@ function DataBox({ title, color }: { title: string, color: string }) {
                 </div>
             ) : (
                 <div className="space-y-1">
-                    <div className={`text-2xl font-mono font-bold text-${color}-900`}>{data.id}</div>
-                    <div className="text-xs text-slate-500">Fetched at: {data.timestamp}</div>
+                    <div className={`text-2xl font-mono font-bold text-${color}-900`}>{data?.id ?? 'N/A'}</div>
+                    <div className="text-xs text-slate-500">Fetched at: {data?.timestamp ?? 'N/A'}</div>
                     {isFetching && <div className="text-xs text-amber-600 font-semibold animate-pulse">Refetching in background...</div>}
                 </div>
             )}
