@@ -35,8 +35,7 @@ export default function Home() {
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Considerations</span>
         </h1>
         <p className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-          Battle-tested patterns for modern frontend development.
-          Explore why industry leaders choose Next.js, TanStack Query, and Zustand.
+          Explore and play with this app to see what's possible. From Server Actions to interactive playgrounds, discover the features that make modern Next.js exciting.
         </p>
       </section>
 
