@@ -31,26 +31,21 @@ const fetchSlowData = async () => {
     };
 };
 
-function DataBox({ title, color, onRefetch }: { title: string, color: string, onRefetch: () => void }) {
+function DataBox({ title, color, fetchTrigger }: { title: string, color: string, fetchTrigger: number }) {
+    // Both components use the SAME query key with fetchTrigger
+    // When fetchTrigger changes, both components request new data simultaneously
+    // React Query automatically deduplicates these into ONE network request!
     const { data, isLoading, isFetching } = useQuery({
-        queryKey: ['dedupe-demo'],
+        queryKey: ['dedupe-demo', fetchTrigger],
         queryFn: fetchSlowData,
+        staleTime: 0,
     });
 
     return (
         <div className={`p-6 rounded-xl border-2 transition-all ${isFetching ? 'border-dashed border-amber-400 bg-amber-50 animate-pulse' : isLoading ? 'border-dashed border-slate-300' : 'border-solid border-' + color + '-500 bg-' + color + '-50'}`}>
             <div className="flex items-center justify-between mb-3">
                 <h3 className={`font-bold text-${color}-700`}>{title}</h3>
-                <button
-                    onClick={onRefetch}
-                    disabled={isFetching}
-                    className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${isFetching
-                        ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
-                        : `bg-${color}-600 text-white hover:bg-${color}-700 active:scale-95`
-                        }`}
-                >
-                    {isFetching ? '⏳' : '🔄'} Refetch
-                </button>
+                {isFetching && <span className="text-xs text-amber-600 font-semibold animate-pulse">🔄 Fetching...</span>}
             </div>
             {isLoading ? (
                 <div className="flex items-center gap-2 text-slate-500 animate-pulse">
@@ -61,8 +56,7 @@ function DataBox({ title, color, onRefetch }: { title: string, color: string, on
                 <div className="space-y-1">
                     <div className={`text-2xl font-mono font-bold text-${color}-900`}>#{data?.id ?? 'N/A'}</div>
                     <div className="text-xs text-slate-500">Fetched at: {data?.timestamp ?? 'N/A'}</div>
-                    <div className="text-xs text-slate-400">Request ID: {data?.requestId ?? 'N/A'}</div>
-                    {isFetching && <div className="text-xs text-amber-600 font-semibold animate-pulse">🔄 Fetching...</div>}
+                    <div className="text-xs font-bold text-amber-600">Request ID: {data?.requestId ?? 'N/A'}</div>
                 </div>
             )}
         </div>
@@ -73,23 +67,20 @@ export default function DedupePage() {
     const [showSecond, setShowSecond] = useState(false);
     const [clickCount, setClickCount] = useState(0);
     const [actualRequests, setActualRequests] = useState(0);
-
-    // Use the query hook at the parent level to get access to refetch
-    const { refetch } = useQuery({
-        queryKey: ['dedupe-demo'],
-        queryFn: fetchSlowData,
-    });
+    const [fetchTrigger, setFetchTrigger] = useState(0);
 
     const handleSpamClick = () => {
         const beforeCount = requestCounter;
         setClickCount(c => c + 1);
 
-        // Use refetch() instead of invalidateQueries() - this WILL deduplicate!
-        refetch();
+        // Change fetchTrigger to cause BOTH components to fetch simultaneously
+        // React Query will see they have the same query key and deduplicate!
+        setFetchTrigger(Date.now());
 
         // Update the actual request count after a short delay
         setTimeout(() => {
-            setActualRequests(requestCounter - beforeCount + actualRequests);
+            const newRequests = requestCounter - beforeCount;
+            setActualRequests(prev => prev + newRequests);
         }, 100);
     };
 
@@ -114,7 +105,7 @@ export default function DedupePage() {
                     <div className="glass-panel p-6 rounded-2xl">
                         <div className="flex gap-4 mb-6 sticky top-4 z-10 bg-white/50 backdrop-blur p-2 rounded-xl border border-white/20">
                             <button
-                                onClick={() => refetch()}
+                                onClick={() => setFetchTrigger(Date.now())}
                                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm"
                             >
                                 Refetch Both
@@ -128,10 +119,10 @@ export default function DedupePage() {
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-8">
-                            <DataBox title="Component A" color="indigo" onRefetch={() => refetch()} />
+                            <DataBox title="Component A" color="indigo" fetchTrigger={fetchTrigger} />
 
                             {showSecond && (
-                                <DataBox title="Component B" color="emerald" onRefetch={() => refetch()} />
+                                <DataBox title="Component B" color="emerald" fetchTrigger={fetchTrigger} />
                             )}
                         </div>
 
