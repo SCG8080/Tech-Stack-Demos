@@ -87,8 +87,8 @@ export default function DedupePage() {
                         </div>
 
                         <div className="mt-8 p-4 bg-amber-50 rounded-lg border border-amber-100 text-sm text-amber-800">
-                            <strong>Observe:</strong> If you trigger a refetch while both are visible, they will both go into &quot;Loading/Fetching&quot; state, but only <strong>ONE</strong> network request will be sent.
-                            They will resolve at the exact same time with the exact same Random ID.
+                            <strong>Observe:</strong> If you trigger a refetch while both are visible, they will both go into &quot;Loading/Fetching&quot; state simultaneously.
+                            They will resolve at the exact same time with the exact same Random ID - proving only <strong>ONE</strong> function call executed.
                         </div>
                     </div>
                 </div>
@@ -124,7 +124,7 @@ export default function DedupePage() {
                             </div>
                         </div>
                         <p className="text-xs text-center text-slate-400 mt-2">
-                            (Check your Network tab to verify!)
+                            (Simulated: Watch both components get the SAME Random ID at the SAME time!)
                         </p>
                     </div>
                 </div>
