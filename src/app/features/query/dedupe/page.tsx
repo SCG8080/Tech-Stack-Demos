@@ -31,23 +31,18 @@ const fetchSlowData = async () => {
     };
 };
 
-function DataBox({ title, color }: { title: string, color: string }) {
-    const queryClient = useQueryClient();
+function DataBox({ title, color, onRefetch }: { title: string, color: string, onRefetch: () => void }) {
     const { data, isLoading, isFetching } = useQuery({
         queryKey: ['dedupe-demo'],
         queryFn: fetchSlowData,
     });
-
-    const handleRefetch = () => {
-        queryClient.invalidateQueries({ queryKey: ['dedupe-demo'] });
-    };
 
     return (
         <div className={`p-6 rounded-xl border-2 transition-all ${isFetching ? 'border-dashed border-amber-400 bg-amber-50 animate-pulse' : isLoading ? 'border-dashed border-slate-300' : 'border-solid border-' + color + '-500 bg-' + color + '-50'}`}>
             <div className="flex items-center justify-between mb-3">
                 <h3 className={`font-bold text-${color}-700`}>{title}</h3>
                 <button
-                    onClick={handleRefetch}
+                    onClick={onRefetch}
                     disabled={isFetching}
                     className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${isFetching
                         ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
@@ -75,15 +70,22 @@ function DataBox({ title, color }: { title: string, color: string }) {
 }
 
 export default function DedupePage() {
-    const queryClient = useQueryClient();
     const [showSecond, setShowSecond] = useState(false);
     const [clickCount, setClickCount] = useState(0);
     const [actualRequests, setActualRequests] = useState(0);
 
+    // Use the query hook at the parent level to get access to refetch
+    const { refetch } = useQuery({
+        queryKey: ['dedupe-demo'],
+        queryFn: fetchSlowData,
+    });
+
     const handleSpamClick = () => {
         const beforeCount = requestCounter;
         setClickCount(c => c + 1);
-        queryClient.invalidateQueries({ queryKey: ['dedupe-demo'] });
+
+        // Use refetch() instead of invalidateQueries() - this WILL deduplicate!
+        refetch();
 
         // Update the actual request count after a short delay
         setTimeout(() => {
@@ -112,7 +114,7 @@ export default function DedupePage() {
                     <div className="glass-panel p-6 rounded-2xl">
                         <div className="flex gap-4 mb-6 sticky top-4 z-10 bg-white/50 backdrop-blur p-2 rounded-xl border border-white/20">
                             <button
-                                onClick={() => queryClient.invalidateQueries({ queryKey: ['dedupe-demo'] })}
+                                onClick={() => refetch()}
                                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-sm"
                             >
                                 Refetch Both
@@ -126,10 +128,10 @@ export default function DedupePage() {
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-8">
-                            <DataBox title="Component A" color="indigo" />
+                            <DataBox title="Component A" color="indigo" onRefetch={() => refetch()} />
 
                             {showSecond && (
-                                <DataBox title="Component B" color="emerald" />
+                                <DataBox title="Component B" color="emerald" onRefetch={() => refetch()} />
                             )}
                         </div>
 
