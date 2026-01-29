@@ -13,7 +13,9 @@ export default function SemanticSearchPage() {
 
     // Available Knowledge Base content
     const [kbContent, setKbContent] = useState<any[]>([]);
-    const [showKb, setShowKb] = useState(false);
+
+    // We no longer need showKb toggle as we show a dedicated list
+    // const [showKb, setShowKb] = useState(false);
 
     const [logs, setLogs] = useState<string[]>([]);
     const log = (msg: string) => setLogs(prev => [`[${new Date().toLocaleTimeString()}] ${msg}`, ...prev]);
@@ -107,6 +109,8 @@ export default function SemanticSearchPage() {
         }
     };
 
+    const [previewItem, setPreviewItem] = useState<{ title: string, content: string, highlight?: string } | null>(null);
+
     const handleDownload = (filename: string, content: string, type: string, fullContent?: string) => {
         const dataToSave = fullContent || `FAKE FILE GENERATED FOR DEMO\n\nSource: ${filename}\nType: ${type}\n\nSnippet:\n${content}`;
         const element = document.createElement("a");
@@ -116,6 +120,78 @@ export default function SemanticSearchPage() {
         document.body.appendChild(element);
         element.click();
         log(`Downloaded file: ${filename}`);
+    };
+
+    const handlePreview = (title: string, fullContent: string, highlightSnippet?: string) => {
+        setPreviewItem({ title, content: fullContent, highlight: highlightSnippet });
+        log(`Opening preview for: ${title}`);
+    };
+
+    // Enhanced highlighting component with Context View
+    const HighlightedContent = ({ content, highlight }: { content: string, highlight?: string }) => {
+        const [showFull, setShowFull] = useState(false);
+        const scrollRef = useRef<HTMLSpanElement>(null);
+
+        // Auto-scroll to highlight when it appears
+        useEffect(() => {
+            if (scrollRef.current) {
+                scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, [showFull, highlight]);
+
+        if (!highlight || highlight.length < 5) {
+            return <pre className="whitespace-pre-wrap font-mono text-xs text-slate-700">{content}</pre>;
+        }
+
+        // Logic to toggle between full content and "Context View"
+        let displayContent = content;
+        let isTruncated = false;
+        const CONTEXT_PADDING = 1000;
+
+        if (!showFull && content.length > CONTEXT_PADDING * 2) {
+            const index = content.indexOf(highlight);
+            if (index !== -1) {
+                const start = Math.max(0, index - CONTEXT_PADDING);
+                const end = Math.min(content.length, index + highlight.length + CONTEXT_PADDING);
+                displayContent = (start > 0 ? "...[prev]...\n" : "") + content.substring(start, end) + (end < content.length ? "\n...[next]..." : "");
+                isTruncated = true;
+            }
+        }
+
+        // Split for highlighting
+        // Note: Using displayContent here to ensure we only render the visible slice
+        const parts = displayContent.split(highlight);
+
+        return (
+            <div className="relative">
+                {content.length > 2000 && (
+                    <div className="sticky top-0 z-10 flex justify-end mb-2">
+                        <button
+                            onClick={() => setShowFull(!showFull)}
+                            className="bg-indigo-600/90 backdrop-blur text-white text-[10px] font-bold px-3 py-1 rounded-full shadow hover:bg-indigo-700 transition"
+                        >
+                            {showFull ? "Show Context Only" : "Show Full Document"}
+                        </button>
+                    </div>
+                )}
+
+                <pre className="whitespace-pre-wrap font-mono text-xs text-slate-700">
+                    {parts.map((part, i) => (
+                        <span key={i}>
+                            {part}
+                            {i < parts.length - 1 && (
+                                <span
+                                    ref={!showFull || (showFull && i === 0) ? scrollRef : null} // Scroll to first occurrence
+                                    className="bg-yellow-200 text-slate-900 font-bold px-1 rounded border border-yellow-300 shadow-sm animate-pulse"
+                                >
+                                    {highlight}
+                                </span>
+                            )}
+                        </span>
+                    ))}
+                </pre>
+            </div>
+        );
     };
 
     return (
@@ -139,94 +215,120 @@ export default function SemanticSearchPage() {
                             <div className="h-full bg-indigo-600 transition-all duration-300" style={{ width: `${progress}%` }}></div>
                         </div>}
 
-                        <div className="mb-6">
+                        {/* 1. Knowledge Base Manager (Primary Action) */}
+                        <div className="mb-8">
+                            <div className="flex items-center justify-between mb-4">
+                                <label className="block text-sm font-bold text-slate-800 flex items-center gap-2">
+                                    <span>📚</span> Knowledge Base ({kbContent.length} chunks)
+                                </label>
+                                <span className="text-[10px] uppercase font-bold text-slate-400">Supported: .txt, .md, .json</span>
+                            </div>
+
+                            <div className="flex gap-2 mb-2">
+                                <input
+                                    type="text"
+                                    placeholder="Paste URL (e.g. raw GitHub file or Gutenberg .txt)..."
+                                    className="flex-1 p-3 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const val = e.currentTarget.value;
+                                            if (val) {
+                                                handleUrlLoad(val);
+                                                e.currentTarget.value = '';
+                                            }
+                                        }
+                                    }}
+                                />
+                                <button
+                                    onClick={(e) => {
+                                        const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                        if (input.value) {
+                                            handleUrlLoad(input.value);
+                                            input.value = '';
+                                        }
+                                    }}
+                                    disabled={!ready || status.startsWith('Fetching') || status.startsWith('Indexing')}
+                                    className="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-wait transition-colors shadow-md hover:shadow-lg flex items-center gap-2"
+                                >
+                                    {status.startsWith('Fetching') || status.startsWith('Indexing') ? (
+                                        <>
+                                            <span className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin"></span>
+                                            <span>Processing...</span>
+                                        </>
+                                    ) : (
+                                        'Add Source'
+                                    )}
+                                </button>
+                            </div>
+
+                            <div className="text-[10px] text-slate-400 flex gap-1">
+                                <span>Try:</span>
+                                <span
+                                    className="cursor-pointer text-indigo-500 hover:underline"
+                                    onClick={() => handleUrlLoad("https://www.gutenberg.org/cache/epub/37134/pg37134.txt")}
+                                >
+                                    Elements of Style (Gutenberg)
+                                </span>
+                                <span>•</span>
+                                <span
+                                    className="cursor-pointer text-indigo-500 hover:underline"
+                                    onClick={() => handleUrlLoad("https://raw.githubusercontent.com/SCG8080/Tech-Stack-Demos/main/README.md")}
+                                >
+                                    This Repo README
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Source List */}
+                        {kbContent.length > 0 && (
+                            <div className="mb-8 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                                <div className="px-4 py-2 bg-slate-100 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                    Active Sources({Array.from(new Set(kbContent.map(k => k.sourceName))).length})
+                                </div>
+                                <div className="max-h-40 overflow-y-auto p-2 space-y-1">
+                                    {/* Deduplicate sources for display */}
+                                    {Array.from(new Set(kbContent.map(k => k.sourceName))).map(source => {
+                                        const sourceItem = kbContent.find(k => k.sourceName === source);
+                                        return (
+                                            <div key={source} className="flex items-center gap-2 text-xs text-slate-700 px-2 py-1 bg-white rounded border border-slate-100 shadow-sm group">
+                                                <span className="text-emerald-500">●</span>
+                                                <span
+                                                    className="font-mono truncate flex-1 cursor-pointer hover:text-indigo-600 hover:underline"
+                                                    onClick={() => sourceItem && handlePreview(source, sourceItem.fullContent)}
+                                                >
+                                                    {source}
+                                                </span>
+                                                <span className="text-[10px] text-slate-400 bg-slate-50 px-1.5 rounded mr-1">{kbContent.filter(k => k.sourceName === source).length} chunks</span>
+                                                <button
+                                                    title="Download"
+                                                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-indigo-600 transition-opacity"
+                                                    onClick={() => sourceItem && handleDownload(sourceItem.sourceName, sourceItem.text, sourceItem.sourceType, sourceItem.fullContent)}
+                                                >
+                                                    ⬇
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 2. Semantic Search Input */}
+                        <div className="pt-6 border-t border-slate-100">
                             <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                Search Knowledge Base ({kbContent.length} chunks indexed)
+                                Ask Questions
                             </label>
                             <input
                                 type="text"
                                 value={query}
                                 onChange={(e) => handleSearch(e.target.value)}
-                                disabled={!ready}
-                                placeholder="e.g. 'brevity', 'active voice', 'needless words'..."
-                                className="w-full p-4 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 transition-all shadow-inner"
+                                disabled={!ready || kbContent.length === 0}
+                                placeholder={kbContent.length === 0 ? "Add a source above to start..." : "Ask something about the text..."}
+                                className="w-full p-4 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 transition-all shadow-inner disabled:bg-slate-50 disabled:cursor-not-allowed"
                             />
                             {!ready && (
                                 <div className="text-xs text-indigo-600 mt-2 animate-pulse font-mono">
                                     {status}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Knowledge Source Toggle */}
-                        <div className="border-t border-slate-100 pt-4">
-                            <button
-                                onClick={() => setShowKb(!showKb)}
-                                className="text-sm text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-2"
-                            >
-                                {showKb ? 'Hide Source Files' : 'View Indexed Sources'}
-                            </button>
-
-
-                            {/* Dynamic URL Loader */}
-                            <div className="mt-6 pt-6 border-t border-slate-100">
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Enter .txt URL (e.g. Project Gutenberg)"
-                                        className="flex-1 p-2 text-sm border border-slate-200 rounded-lg bg-slate-50"
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                const val = e.currentTarget.value;
-                                                if (val) handleUrlLoad(val);
-                                            }
-                                        }}
-                                    />
-                                    <button
-                                        onClick={(e) => {
-                                            const input = e.currentTarget.previousElementSibling as HTMLInputElement;
-                                            if (input.value) handleUrlLoad(input.value);
-                                        }}
-                                        disabled={!ready}
-                                        className="bg-slate-800 text-white px-3 py-2 rounded-lg text-sm font-bold hover:bg-slate-700 disabled:opacity-50"
-                                    >
-                                        Load
-                                    </button>
-                                </div>
-                                <div className="text-[10px] text-slate-400 mt-1">
-                                    Uses AllOrigins CORS Proxy. Try:
-                                    <span
-                                        className="cursor-pointer text-indigo-500 hover:underline ml-1"
-                                        onClick={(e) => {
-                                            const input = e.currentTarget.parentElement?.previousElementSibling?.firstElementChild as HTMLInputElement;
-                                            if (input) {
-                                                input.value = "https://www.gutenberg.org/cache/epub/37134/pg37134.txt";
-                                                // Trigger change event if needed, or just leave it
-                                            }
-                                        }}
-                                    >
-                                        Elements of Style (Gutenberg)
-                                    </span>
-                                </div>
-                            </div>
-
-                            {showKb && (
-                                <div className="mt-3 bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs font-mono text-slate-600 max-h-60 overflow-y-auto">
-                                    <ul className="space-y-2 list-none pl-0">
-                                        {kbContent.map((item) => (
-                                            <li key={item.id} className="flex gap-2 text-[10px] items-start pb-2 border-b border-slate-100 last:border-0 hover:bg-slate-100 p-1 rounded transition-colors cursor-pointer group" onClick={() => handleDownload(item.sourceName, item.text, item.sourceType, item.fullContent)}>
-                                                <span className={`px-1.5 rounded text-white font-bold min-w-[35px] text-center mt-0.5 ${item.sourceType === 'Book' ? 'bg-indigo-500' : 'bg-slate-400'
-                                                    }`}>{item.sourceType?.substring(0, 4)}</span>
-                                                <div className="flex-1">
-                                                    <div className="text-indigo-900 font-semibold truncate w-48 group-hover:underline flex items-center gap-1">
-                                                        {item.sourceName}
-                                                        <span className="text-[9px] opacity-0 group-hover:opacity-100 text-slate-400 ml-1">⬇</span>
-                                                    </div>
-                                                    <div className="text-slate-500 line-clamp-1">{item.text.slice(0, 50)}...</div>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
                                 </div>
                             )}
                         </div>
@@ -241,18 +343,38 @@ export default function SemanticSearchPage() {
                     {results.length > 0 ? (
                         <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {results.map((r, i) => (
-                                <div key={r.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                                    <div className="flex items-center gap-2 mb-2 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => handleDownload(r.sourceName, r.text, r.sourceType, r.fullContent)}>
-                                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded text-white ${r.sourceType === 'Book' ? 'bg-indigo-500' : 'bg-slate-400'
-                                            }`}>
-                                            {r.sourceType}
-                                        </span>
-                                        <span className="text-xs text-indigo-600 hover:underline font-mono truncate max-w-[200px]" title={`Download ${r.sourceName}`}>
-                                            {r.sourceName} 📎
-                                        </span>
+                                <div key={r.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div
+                                            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity flex-1"
+                                            onClick={() => handlePreview(r.sourceName, r.fullContent, r.text)}
+                                        >
+                                            <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded text-white ${r.sourceType === 'Book' ? 'bg-indigo-500' : 'bg-slate-400'
+                                                }`}>
+                                                {r.sourceType}
+                                            </span>
+                                            <span className="text-xs text-indigo-600 hover:underline font-mono truncate max-w-[200px]" title={`View ${r.sourceName}`}>
+                                                {r.sourceName} 👁️
+                                            </span>
+                                        </div>
+                                        <button
+                                            title="Download Source File"
+                                            className="text-slate-300 hover:text-slate-600 transition-colors px-2"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDownload(r.sourceName, r.text, r.sourceType, r.fullContent);
+                                            }}
+                                        >
+                                            ⬇
+                                        </button>
                                     </div>
 
-                                    <p className="text-slate-800 font-medium mb-2 leading-relaxed text-sm">"{r.text}"</p>
+                                    <p
+                                        className="text-slate-800 font-medium mb-2 leading-relaxed text-sm cursor-pointer hover:bg-slate-50 p-1 rounded transition-colors"
+                                        onClick={() => handlePreview(r.sourceName, r.fullContent, r.text)}
+                                    >
+                                        "{r.text}"
+                                    </p>
                                     <div className="flex items-center justify-between text-xs">
                                         <div className="w-full max-w-[200px] h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                             <div
@@ -271,6 +393,38 @@ export default function SemanticSearchPage() {
                         </div>
                     )}
                 </div>
+
+                {/* Preview Modal */}
+                {previewItem && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+                        <div className="bg-white w-full max-w-4xl h-[80vh] rounded-2xl shadow-2xl flex flex-col border border-slate-200 overflow-hidden">
+                            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                                <h3 className="font-bold text-slate-700 font-mono truncate max-w-2xl flex items-center gap-2">
+                                    <span>📄</span> {previewItem.title}
+                                </h3>
+                                <button
+                                    onClick={() => setPreviewItem(null)}
+                                    className="p-2 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            <div className="flex-1 overflow-auto p-6 bg-slate-50 custom-scrollbar">
+                                <div className="bg-white p-8 rounded-xl border border-slate-100 shadow-sm min-h-full">
+                                    <HighlightedContent content={previewItem.content} highlight={previewItem.highlight} />
+                                </div>
+                            </div>
+                            <div className="p-3 border-t border-slate-100 bg-white flex justify-end gap-2 text-xs text-slate-400">
+                                {previewItem.highlight && (
+                                    <span className="flex items-center gap-1">
+                                        <span className="w-3 h-3 bg-yellow-200 border border-yellow-300 rounded"></span>
+                                        Match Highlighted
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Debug Console */}
                 <div className="col-span-full mt-4">
