@@ -150,9 +150,44 @@ self.addEventListener('message', async (event) => {
             return;
         }
 
-        // Removed 'add' logic as it's no longer used in this static demo version
         if (type === 'add') {
-            // no-op or error
+            const { text, url, type: docType } = payload;
+            const embedder = await EmbedderSingleton.getInstance();
+
+            // Chunking Strategy (Simple split by double newline or fallback to length)
+            const rawChunks = text.split(/\n\s*\n/).filter(c => c.trim().length > 30);
+
+            // If too few chunks (e.g. slight formatting diff), try splitting by single lines
+            const chunks = rawChunks.length > 0 ? rawChunks : text.split('\n').filter(c => c.trim().length > 30);
+
+            let currentIdx = knowledgeBase.length; // Start ID from current end
+
+            for (const chunkText of chunks) {
+                const id = `dynamic-${Date.now()}-${currentIdx++}`;
+                const item = {
+                    id,
+                    text: chunkText.trim(),
+                    sourceId: url,
+                    sourceName: url.split('/').pop() || 'Dynamic Source',
+                    sourceType: docType || 'Web',
+                    fullContent: text
+                };
+
+                // Embed
+                const output = await embedder(item.text, { pooling: 'mean', normalize: true });
+
+                // Add to Memory
+                knowledgeBase.push(item);
+                embeddingsCache.push({ ...item, embedding: output.data });
+
+                // Notify Progress (optional, maybe just per chunk or batch)
+            }
+
+            self.postMessage({
+                status: 'ready',
+                count: knowledgeBase.length,
+                message: `Indexed ${chunks.length} new segments from ${url}`
+            });
         }
 
         if (type === 'search') {

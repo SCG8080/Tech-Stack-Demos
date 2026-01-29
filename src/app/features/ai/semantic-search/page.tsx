@@ -80,6 +80,33 @@ export default function SemanticSearchPage() {
         }
     };
 
+    const handleUrlLoad = async (url: string) => {
+        if (!worker.current) return;
+        setStatus(`Fetching ${url}...`);
+
+        try {
+            // Use AllOrigins as CORS Proxy
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+            const res = await fetch(proxyUrl);
+            if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+
+            const text = await res.text();
+            if (text.length < 50) throw new Error("Content too short or empty");
+
+            setStatus(`Indexing content from ${url}...`);
+            log(`Fetched ${text.length} chars from ${url}`);
+
+            worker.current.postMessage({
+                type: 'add',
+                payload: { text, url, type: 'Web' }
+            });
+
+        } catch (err: any) {
+            log(`❌ Load Error: ${err.message}`);
+            setStatus('Error loading URL');
+        }
+    };
+
     const handleDownload = (filename: string, content: string, type: string, fullContent?: string) => {
         const dataToSave = fullContent || `FAKE FILE GENERATED FOR DEMO\n\nSource: ${filename}\nType: ${type}\n\nSnippet:\n${content}`;
         const element = document.createElement("a");
@@ -139,6 +166,49 @@ export default function SemanticSearchPage() {
                             >
                                 {showKb ? 'Hide Source Files' : 'View Indexed Sources'}
                             </button>
+
+
+                            {/* Dynamic URL Loader */}
+                            <div className="mt-6 pt-6 border-t border-slate-100">
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        placeholder="Enter .txt URL (e.g. Project Gutenberg)"
+                                        className="flex-1 p-2 text-sm border border-slate-200 rounded-lg bg-slate-50"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                const val = e.currentTarget.value;
+                                                if (val) handleUrlLoad(val);
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        onClick={(e) => {
+                                            const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                                            if (input.value) handleUrlLoad(input.value);
+                                        }}
+                                        disabled={!ready}
+                                        className="bg-slate-800 text-white px-3 py-2 rounded-lg text-sm font-bold hover:bg-slate-700 disabled:opacity-50"
+                                    >
+                                        Load
+                                    </button>
+                                </div>
+                                <div className="text-[10px] text-slate-400 mt-1">
+                                    Uses AllOrigins CORS Proxy. Try:
+                                    <span
+                                        className="cursor-pointer text-indigo-500 hover:underline ml-1"
+                                        onClick={(e) => {
+                                            const input = e.currentTarget.parentElement?.previousElementSibling?.firstElementChild as HTMLInputElement;
+                                            if (input) {
+                                                input.value = "https://www.gutenberg.org/cache/epub/37134/pg37134.txt";
+                                                // Trigger change event if needed, or just leave it
+                                            }
+                                        }}
+                                    >
+                                        Elements of Style (Gutenberg)
+                                    </span>
+                                </div>
+                            </div>
 
                             {showKb && (
                                 <div className="mt-3 bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs font-mono text-slate-600 max-h-60 overflow-y-auto">
@@ -230,6 +300,6 @@ export default function SemanticSearchPage() {
                 inputName="Text Query"
                 outputName="Top-K Matches"
             />
-        </div>
+        </div >
     );
 }
