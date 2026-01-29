@@ -8,7 +8,7 @@ export default function Header() {
                 {/* Left Logo - VITAS */}
                 <div className="flex-shrink-0">
                     <Image
-                        src="/vitas.png"
+                        src="/Tech-Stack-Demos/vitas.png"
                         alt="VITAS Logo"
                         width={120}
                         height={40}
@@ -38,7 +38,7 @@ export default function Header() {
                 {/* Right Logo - SCG */}
                 <div className="flex-shrink-0">
                     <Image
-                        src="/SCG.png"
+                        src="/Tech-Stack-Demos/SCG.png"
                         alt="SCG Logo"
                         width={120}
                         height={40}

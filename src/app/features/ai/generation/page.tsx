@@ -19,7 +19,8 @@ export default function SmartComposePage() {
 
     useEffect(() => {
         if (!worker.current) {
-            worker.current = new Worker(`/generation-worker.js?v=${Date.now()}`, { type: 'module' });
+            const basePath = process.env.NODE_ENV === 'production' ? '/Tech-Stack-Demos' : '';
+            worker.current = new Worker(`${basePath}/generation-worker.js?v=${Date.now()}`, { type: 'module' });
 
             worker.current.onmessage = (e) => {
                 const { status, progress, prediction } = e.data;

@@ -22,9 +22,12 @@ export default function SentimentPage() {
     // Initialize Worker
     useEffect(() => {
         if (!worker.current) {
-            log('Creating worker from /sentiment-worker.js');
+            const basePath = process.env.NODE_ENV === 'production' ? '/Tech-Stack-Demos' : '';
+            const workerPath = `${basePath}/sentiment-worker.js`;
+
+            log(`Creating worker from ${workerPath}`);
             // Cache busting to ensure fresh worker code
-            worker.current = new Worker(`/sentiment-worker.js?v=${Date.now()}`, {
+            worker.current = new Worker(`${workerPath}?v=${Date.now()}`, {
                 type: 'module'
             });
 

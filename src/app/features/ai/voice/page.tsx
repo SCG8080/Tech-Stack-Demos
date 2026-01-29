@@ -49,9 +49,10 @@ export default function VoicePage() {
 
         // 2. Worker setup
         if (!worker.current) {
-            log('Creating worker from /voice-worker.js');
+            const basePath = process.env.NODE_ENV === 'production' ? '/Tech-Stack-Demos' : '';
+            log(`Creating worker from ${basePath}/voice-worker.js`);
             // FIX: Add cache busting to prevent stale worker loading
-            worker.current = new Worker(`/voice-worker.js?v=${Date.now()}`, { type: 'module' });
+            worker.current = new Worker(`${basePath}/voice-worker.js?v=${Date.now()}`, { type: 'module' });
 
             worker.current.onerror = (err) => {
                 const msg = err instanceof ErrorEvent ? err.message : 'Unknown worker error';

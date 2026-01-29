@@ -20,8 +20,9 @@ export default function ObjectDetectionPage() {
 
     useEffect(() => {
         if (!worker.current) {
-            log('Creating worker from /vision-worker.js');
-            worker.current = new Worker(`/vision-worker.js?v=${Date.now()}`, { type: 'module' });
+            const basePath = process.env.NODE_ENV === 'production' ? '/Tech-Stack-Demos' : '';
+            log(`Creating worker from ${basePath}/vision-worker.js`);
+            worker.current = new Worker(`${basePath}/vision-worker.js?v=${Date.now()}`, { type: 'module' });
 
             worker.current.onerror = (err) => {
                 log(`❌ Worker Error: ${err instanceof ErrorEvent ? err.message : 'Unknown'}`);

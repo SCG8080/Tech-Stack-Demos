@@ -22,9 +22,10 @@ export default function SemanticSearchPage() {
 
     useEffect(() => {
         if (!worker.current) {
-            log('Creating worker from /search-worker.js');
+            const basePath = process.env.NODE_ENV === 'production' ? '/Tech-Stack-Demos' : '';
+            log(`Creating worker from ${basePath}/search-worker.js`);
             // Cache busting
-            worker.current = new Worker(`/search-worker.js?v=${Date.now()}`, { type: 'module' });
+            worker.current = new Worker(`${basePath}/search-worker.js?v=${Date.now()}`, { type: 'module' });
 
             worker.current.onerror = (err) => {
                 const msg = err instanceof ErrorEvent ? err.message : 'Unknown worker error';
