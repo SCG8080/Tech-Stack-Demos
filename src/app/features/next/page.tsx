@@ -37,8 +37,8 @@ export default function NextFeaturesPage() {
     return (
         <div className="space-y-12">
             <div className="flex items-center gap-4">
-                <Link href="/" className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors">
-                    ← Back
+                <Link href="/features" className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors">
+                    ← Back to Demos
                 </Link>
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">Next.js Architecture</h1>

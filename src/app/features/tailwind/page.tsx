@@ -11,10 +11,10 @@ export default function TailwindPage() {
         <div className="space-y-12">
             <div className="flex items-center gap-4">
                 <Link
-                    href="/"
+                    href="/features"
                     className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
                 >
-                    ← Back
+                    ← Back to Demos
                 </Link>
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900">Tailwind CSS</h1>

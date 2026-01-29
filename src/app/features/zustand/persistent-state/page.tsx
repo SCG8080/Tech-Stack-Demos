@@ -1,6 +1,7 @@
 'use client';
 
 import { usePreferencesStore } from '@/app/store/usePreferencesStore';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import TechnicalExplainer from '@/app/components/TechnicalExplainer';
 
@@ -32,11 +33,19 @@ export default function ZustandDemoPage() {
 
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900">Client State Persistence</h1>
-                <p className="text-slate-600 mt-2">
-                    Demonstrating `zustand` with `persist` middleware. Changes here save to `localStorage` and survive refreshes.
-                </p>
+            <div className="flex items-center gap-4">
+                <Link
+                    href="/features/zustand"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
+                >
+                    ← Back
+                </Link>
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900">Client State Persistence</h1>
+                    <p className="text-slate-600 mt-2">
+                        Demonstrating `zustand` with `persist` middleware. Changes here save to `localStorage` and survive refreshes.
+                    </p>
+                </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">

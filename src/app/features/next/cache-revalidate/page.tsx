@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import TechnicalExplainer from '@/app/components/TechnicalExplainer';
 
 // Simulate Server Data Generation
@@ -89,11 +90,19 @@ export default function CacheRevalidatePage() {
 
     return (
         <div className="space-y-8 max-w-5xl mx-auto">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-slate-900">Caching & Revalidation</h1>
-                <p className="text-slate-600 mt-2 text-lg">
-                    Control the "Freshness Policy" of your data.
-                </p>
+            <div className="flex items-center gap-4 mb-8">
+                <Link
+                    href="/features/next"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
+                >
+                    ← Back
+                </Link>
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900">Caching & Revalidation</h1>
+                    <p className="text-slate-600 mt-2 text-lg">
+                        Control the "Freshness Policy" of your data.
+                    </p>
+                </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-12 items-start">

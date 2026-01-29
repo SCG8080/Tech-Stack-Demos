@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useState } from 'react';
 import TechnicalExplainer from '@/app/components/TechnicalExplainer';
 
@@ -23,11 +24,19 @@ export default function PollingPage() {
 
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900">Auto-Polling</h1>
-                <p className="text-slate-600 mt-2">
-                    Keep your UI in sync with the server automatically using `refetchInterval`.
-                </p>
+            <div className="flex items-center gap-4">
+                <Link
+                    href="/features/query"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
+                >
+                    ← Back
+                </Link>
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900">Auto-Polling</h1>
+                    <p className="text-slate-600 mt-2">
+                        Keep your UI in sync with the server automatically using `refetchInterval`.
+                    </p>
+                </div>
             </div>
 
             <div className="glass-panel p-8 rounded-2xl flex flex-col items-center justify-center gap-8">

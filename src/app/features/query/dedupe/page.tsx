@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useState, useRef } from 'react';
 import TechnicalExplainer from '@/app/components/TechnicalExplainer';
 
@@ -92,11 +93,19 @@ export default function DedupePage() {
 
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900">In-flight Deduplication</h1>
-                <p className="text-slate-600 mt-2">
-                    TanStack Query automatically shares the same promise for simultaneous requests.
-                </p>
+            <div className="flex items-center gap-4">
+                <Link
+                    href="/features/query"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
+                >
+                    ← Back
+                </Link>
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900">In-flight Deduplication</h1>
+                    <p className="text-slate-600 mt-2">
+                        TanStack Query automatically shares the same promise for simultaneous requests.
+                    </p>
+                </div>
             </div>
 
             <div className="grid lg:grid-cols-3 gap-8">
@@ -184,7 +193,7 @@ export default function DedupePage() {
 
             <TechnicalExplainer
                 title="Request Coalescing (Deduplication)"
-                analogy="Ordering Pizza. If you and 5 friends all shout &apos;I want pizza!&apos; at the same specific time, you don&apos;t call the pizza place 5 times. You just make ONE call. Everyone gets happy when the pizza arrives."
+                analogy="Ordering Pizza. If you and 5 friends all shout 'I want pizza!' at the same specific time, you don't call the pizza place 5 times. You just make ONE call. Everyone gets happy when the pizza arrives."
                 points={[
                     "Shared Promises: When multiple parts of your app ask for the same data while a request is in-flight, they share that request.",
                     "One Request: During the 2-second loading window, all clicks are deduplicated into a single network call.",

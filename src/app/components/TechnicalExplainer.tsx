@@ -5,7 +5,7 @@ export default function TechnicalExplainer({
     analogy
 }: {
     title: string;
-    points: string[];
+    points: (string | { title: string; description: string })[];
     codeSnippet?: string;
     analogy?: string;
 }) {
@@ -37,7 +37,13 @@ export default function TechnicalExplainer({
                             {points.map((point, idx) => (
                                 <li key={idx} className="flex gap-3 text-slate-400 text-sm leading-relaxed">
                                     <span className="text-indigo-500 font-bold mt-0.5">•</span>
-                                    <span>{point}</span>
+                                    <span>
+                                        {typeof point === 'string' ? point : (
+                                            <>
+                                                <strong className="text-slate-200">{point.title}:</strong> {point.description}
+                                            </>
+                                        )}
+                                    </span>
                                 </li>
                             ))}
                         </ul>

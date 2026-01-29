@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 import { useState } from 'react';
 
 const fetchRandom = async () => {
@@ -78,11 +79,19 @@ export default function CachingPage() {
 
     return (
         <div className="space-y-8">
-            <div>
-                <h1 className="text-3xl font-bold text-slate-900">Caching: TTL vs Garbage Collection</h1>
-                <p className="text-slate-600 mt-2">
-                    Understanding the difference between <strong>Stale Time</strong> (Frequency of updates) and <strong>GC Time</strong> (Memory persistence).
-                </p>
+            <div className="flex items-center gap-4">
+                <Link
+                    href="/features/query"
+                    className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors"
+                >
+                    ← Back
+                </Link>
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900">Caching: TTL vs Garbage Collection</h1>
+                    <p className="text-slate-600 mt-2">
+                        Understanding the difference between <strong>Stale Time</strong> (Frequency of updates) and <strong>GC Time</strong> (Memory persistence).
+                    </p>
+                </div>
             </div>
 
             <div className="glass-panel p-8 rounded-2xl min-h-[400px]">

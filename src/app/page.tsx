@@ -106,6 +106,38 @@ export default function Home() {
           </div>
         </Link>
 
+        {/* Client-Side AI Card */}
+        <Link href="/features/ai" className="group relative block p-8 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-xl hover:border-violet-300 transition-all duration-300 md:col-span-2 lg:col-span-1">
+          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+            <span className="text-4xl">🧠</span>
+          </div>
+
+          <div className="h-12 w-12 rounded-xl bg-violet-50 flex items-center justify-center mb-6 group-hover:bg-violet-500 group-hover:text-white transition-colors duration-300">
+            <span className="font-bold text-xl">AI</span>
+          </div>
+
+          <h2 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-violet-600 transition-colors">Client-Side AI</h2>
+          <p className="text-slate-600 mb-6">
+            Run ML models like BERT entirely in the browser with WebAssembly. Zero API calls.
+          </p>
+
+          <ul className="space-y-2 mb-8 text-sm text-slate-500">
+            <li className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-500" /> DistilBERT & YOLO
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-500" /> Whisper (Voice-to-Text)
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-500" /> Semantic Search (RAG)
+            </li>
+          </ul>
+
+          <div className="flex items-center gap-2 text-violet-600 font-semibold group-hover:gap-4 transition-all">
+            Try Tool <ArrowRight />
+          </div>
+        </Link>
+
         {/* Zustand Card */}
         <Link href="/features/zustand" className="group relative block p-8 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-xl hover:border-orange-300 transition-all duration-300 md:col-span-2 lg:col-span-1">
           <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">

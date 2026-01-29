@@ -29,6 +29,14 @@ export default function FeaturesDirectoryPage() {
             tags: ["Global Store", "Persist Middleware"]
         },
         {
+            title: "Client-Side AI",
+            description: "Run ML models like Whisper, DistilBERT, and ResNet entirely in the browser using WebAssembly. Zero API costs.",
+            icon: "🧠",
+            href: "/features/ai",
+            color: "violet",
+            tags: ["Whisper", "Semantic Search", "Object Detection"]
+        },
+        {
             title: "Tailwind CSS",
             description: "Utility-first styling for rapid UI development.",
             icon: "🌊",
@@ -40,6 +48,11 @@ export default function FeaturesDirectoryPage() {
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-12">
+            <div className="mb-8">
+                <Link href="/" className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 transition-colors">
+                    ← Back to Home
+                </Link>
+            </div>
             <div className="text-center mb-16 space-y-4">
                 <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">
                     Interactive Demos
